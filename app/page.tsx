@@ -5,7 +5,7 @@ import { useAuth } from '@/components/AuthProvider';
 import BottomNav from '@/components/BottomNav';
 import { supabase, Angajat, Concediu, Absenta } from '@/lib/supabase';
 import { getTura, getMonday, DAY_SHORT, fmtDate, TURA_LABEL, TURA_ORE } from '@/lib/rotatie';
-import { Sun, Moon, Coffee, HeartPulse, Ban, ChevronRight, Bell } from 'lucide-react';
+import { Sun, Moon, Coffee, HeartPulse, Ban, ChevronRight, Bell, LogOut } from 'lucide-react';
 
 const ICON_TURA: Record<string, React.ReactNode> = {
   D: <Sun size={30} />,
@@ -26,7 +26,7 @@ const CULOARE_TURA: Record<string, string> = {
 };
 
 export default function TuraMeaPage() {
-  const { session, angajat, loading } = useAuth();
+  const { session, angajat, loading, signOut } = useAuth();
   const router = useRouter();
 
   const [echipa, setEchipa] = useState<Angajat[]>([]);
@@ -35,6 +35,7 @@ export default function TuraMeaPage() {
   const [suplinitorActiv, setSuplinitorActiv] = useState(false);
   const [notifNecitite, setNotifNecitite] = useState(0);
   const [seIncarcaDate, setSeIncarcaDate] = useState(true);
+  const [meniuDeschis, setMeniuDeschis] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -99,10 +100,40 @@ export default function TuraMeaPage() {
           </div>
           <span className="text-white text-[16px] font-semibold">RotaFlow</span>
         </div>
-        <button onClick={() => router.push('/notificari')} className="relative w-9 h-9 flex items-center justify-center">
-          <Bell size={20} className="text-zinc-400" />
-          {notifNecitite > 0 && <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-red-500" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => router.push('/notificari')} className="relative w-9 h-9 flex items-center justify-center">
+            <Bell size={20} className="text-zinc-400" />
+            {notifNecitite > 0 && <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-red-500" />}
+          </button>
+          <div className="relative">
+            <button onClick={() => setMeniuDeschis(o => !o)} className="w-9 h-9 flex items-center justify-center">
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold text-white"
+                style={{ backgroundColor: angajat.avatar_culoare }}
+              >
+                {angajat.nume.substring(0, 2).toUpperCase()}
+              </div>
+            </button>
+            {meniuDeschis && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMeniuDeschis(false)} />
+                <div className="absolute right-0 top-11 w-48 bg-[#2c2c2e] border border-white/[0.1] rounded-xl shadow-xl z-40 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/[0.07]">
+                    <p className="text-white text-[13px] font-medium">{angajat.nume}</p>
+                    <p className="text-zinc-500 text-[11px] mt-0.5">{session?.user?.email}</p>
+                  </div>
+                  <button
+                    onClick={signOut}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-red-400 text-[13px] font-medium hover:bg-white/[0.04] transition-colors"
+                  >
+                    <LogOut size={15} />
+                    Deconectare
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="px-5 pt-2 pb-1">
