@@ -22,13 +22,14 @@ interface AuthCtx {
   echipa: Angajat[]
   tureMirror: TuraMirror[]
   notificari: Notificare[]
+  setNotificari: React.Dispatch<React.SetStateAction<Notificare[]>>
   loading: boolean
   eroare: string | null
   marcheazaCitita: (notifId: string) => void
 }
 
 const Ctx = createContext<AuthCtx>({
-  angajat: null, echipa: [], tureMirror: [], notificari: [],
+  angajat: null, echipa: [], tureMirror: [], notificari: [], setNotificari: () => {},
   loading: true, eroare: null, marcheazaCitita: () => {}
 })
 export const useAuth = () => useContext(Ctx)
@@ -182,7 +183,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [pathname, loadTureMirror, loadNotificari]) // eslint-disable-line
 
   return (
-    <Ctx.Provider value={{ angajat, echipa, tureMirror, notificari, loading, eroare, marcheazaCitita }}>
+    <Ctx.Provider value={{ angajat, echipa, tureMirror, notificari, setNotificari, loading, eroare, marcheazaCitita }}>
       {children}
     </Ctx.Provider>
   )
