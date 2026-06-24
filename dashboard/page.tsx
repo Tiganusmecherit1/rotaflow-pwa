@@ -47,17 +47,23 @@ function Spinner() {
 }
 
 export default function Dashboard() {
-  const { angajat, echipa, loading } = useAuth()
+  const { angajat, echipa, loading, eroare } = useAuth()
   const router = useRouter()
   const [weekOffset, setWeekOffset] = useState(0)
 
   if (loading) return <Spinner />
   if (!angajat) return (
     <div style={{ minHeight: '100vh', background: '#1a1a1f', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
-      <div style={{ fontSize: 16, color: '#8b8b9e' }}>Nu s-au putut încărca datele</div>
+      <div style={{ fontSize: 32, marginBottom: 8 }}>⚠️</div>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'white', textAlign: 'center' }}>
+        {eroare || 'Nu s-au putut încărca datele'}
+      </div>
+      <div style={{ fontSize: 13, color: '#8b8b9e', textAlign: 'center', maxWidth: 300 }}>
+        Verifică că adresa de email folosită la login există în tabela <code style={{color:'#60a5fa'}}>angajati</code> din Supabase.
+      </div>
       <button onClick={async () => { await supabase.auth.signOut(); router.replace('/login') }}
-        style={{ background: '#26262e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 20px', color: '#8b8b9e', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}>
-        Reîncercare
+        style={{ background: '#26262e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 20px', color: 'white', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
+        Deconectare
       </button>
     </div>
   )
