@@ -9,12 +9,12 @@ const ZILE_LUNG = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmb�
 const ZILE_SCURT = ['Du','Lu','Ma','Mi','Jo','Vi','Sâ']
 
 const TC: Record<string,{label:string;emoji:string;bg:string;color:string;border:string;pillBg:string;pillColor:string}> = {
-  D:  {label:'Dimineață',emoji:'☀️',bg:'rgba(30,79,168,0.18)',  color:'#93c5fd',border:'rgba(59,130,246,0.3)', pillBg:'rgba(30,79,168,0.5)', pillColor:'#bfdbfe'},
-  S:  {label:'Seară',    emoji:'🌙',bg:'rgba(76,29,138,0.18)',  color:'#c4b5fd',border:'rgba(139,92,246,0.3)',pillBg:'rgba(76,29,138,0.5)', pillColor:'#ddd6fe'},
-  L:  {label:'Liber',    emoji:'', bg:'transparent',             color:'#4b4b60',border:'rgba(255,255,255,0.05)',pillBg:'rgba(255,255,255,0.06)',pillColor:'#6b6b80'},
-  CO: {label:'Concediu', emoji:'🏖️',bg:'rgba(127,29,29,0.18)', color:'#fca5a5',border:'rgba(239,68,68,0.25)',pillBg:'rgba(127,29,29,0.5)', pillColor:'#fecaca'},
-  CM: {label:'Medical',  emoji:'🏥',bg:'rgba(124,45,18,0.18)',  color:'#fdba74',border:'rgba(249,115,22,0.25)',pillBg:'rgba(124,45,18,0.5)',pillColor:'#fed7aa'},
-  AN: {label:'Absent',   emoji:'⛔',bg:'rgba(69,10,10,0.18)',   color:'#f87171',border:'rgba(220,38,38,0.25)',pillBg:'rgba(69,10,10,0.5)', pillColor:'#fca5a5'},
+  D:  {label:'Dimineață',emoji:'☀️',bg:'rgba(37,99,235,0.35)',  color:'#93c5fd',border:'rgba(59,130,246,0.6)', pillBg:'rgba(37,99,235,0.7)', pillColor:'#ffffff'},
+  S:  {label:'Seară',    emoji:'🌙',bg:'rgba(109,40,217,0.35)', color:'#c4b5fd',border:'rgba(139,92,246,0.6)',pillBg:'rgba(109,40,217,0.7)',pillColor:'#ffffff'},
+  L:  {label:'Liber',    emoji:'', bg:'transparent',             color:'#4b4b60',border:'rgba(255,255,255,0.06)',pillBg:'rgba(255,255,255,0.08)',pillColor:'#6b6b80'},
+  CO: {label:'Concediu', emoji:'🏖️',bg:'rgba(185,28,28,0.35)',  color:'#fca5a5',border:'rgba(239,68,68,0.5)', pillBg:'rgba(185,28,28,0.7)', pillColor:'#ffffff'},
+  CM: {label:'Medical',  emoji:'🏥',bg:'rgba(194,65,12,0.35)',  color:'#fdba74',border:'rgba(249,115,22,0.5)',pillBg:'rgba(194,65,12,0.7)', pillColor:'#ffffff'},
+  AN: {label:'Absent',   emoji:'⛔',bg:'rgba(153,27,27,0.35)',  color:'#f87171',border:'rgba(220,38,38,0.5)', pillBg:'rgba(153,27,27,0.7)', pillColor:'#ffffff'},
 }
 
 const Spinner = () => (
@@ -29,11 +29,10 @@ export default function LunaPage() {
   const [lunaOffset, setLunaOffset] = useState(0)
   const [view, setView] = useState<'lista'|'grid'>('lista')
 
-  if (loading) return <Spinner/>
-  if (!angajat) return <Spinner/>
+  if (loading || !angajat) return <Spinner/>
 
   const now = new Date()
-  const lunaStart = new Date(now.getFullYear(), now.getMonth() + lunaOffset, 1)
+  const lunaStart = new Date(now.getFullYear(), now.getMonth()+lunaOffset, 1)
   const lunaEnd   = new Date(lunaStart.getFullYear(), lunaStart.getMonth()+1, 0)
   const azi = new Date(); azi.setHours(0,0,0,0)
 
@@ -91,7 +90,7 @@ export default function LunaPage() {
               <div key={t} style={{display:'flex',alignItems:'center',gap:6,background:c.pillBg,borderRadius:20,padding:'6px 12px',border:`1px solid ${c.border}`,flexShrink:0}}>
                 {c.emoji&&<span style={{fontSize:13}}>{c.emoji}</span>}
                 <span style={{fontSize:13,fontWeight:700,color:c.pillColor}}>{stats[t]}</span>
-                <span style={{fontSize:11,color:c.color,opacity:0.8}}>{c.label}</span>
+                <span style={{fontSize:11,color:c.color}}>{c.label}</span>
               </div>
             )
           })}
@@ -109,13 +108,13 @@ export default function LunaPage() {
               return (
                 <div key={i} style={{
                   display:'flex',alignItems:'center',
-                  background:isToday?'rgba(96,165,250,0.1)':c.bg,
+                  background:isToday?'rgba(96,165,250,0.15)':c.bg,
                   borderRadius:13,
-                  border:isToday?'1.5px solid rgba(96,165,250,0.5)':`1px solid ${c.border}`,
+                  border:isToday?'2px solid rgba(96,165,250,0.7)':`1px solid ${c.border}`,
                   padding:'10px 14px',
-                  opacity:isPast&&!isToday?0.5:1,
+                  opacity:isPast&&!isToday?0.45:1,
+                  boxShadow:tip==='D'&&!isPast?'0 2px 12px rgba(37,99,235,0.25)':tip==='S'&&!isPast?'0 2px 12px rgba(109,40,217,0.25)':'none',
                 }}>
-                  {/* Numar zi */}
                   <div style={{width:44,flexShrink:0}}>
                     <div style={{fontSize:22,fontWeight:900,lineHeight:1,color:isToday?'#60a5fa':isWE?'#a0a0b8':'white'}}>
                       {d.getDate()}
@@ -124,16 +123,18 @@ export default function LunaPage() {
                       {ZILE_SCURT[d.getDay()]}
                     </div>
                   </div>
-                  <div style={{width:1,height:32,background:'rgba(255,255,255,0.07)',margin:'0 12px',flexShrink:0}}/>
+                  <div style={{width:1,height:32,background:'rgba(255,255,255,0.08)',margin:'0 12px',flexShrink:0}}/>
                   <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:600,color:isToday?'white':isWE?'#8b8b9e':'rgba(255,255,255,0.85)'}}>
+                    <div style={{fontSize:13,fontWeight:600,color:isToday?'white':isWE?'#8b8b9e':'rgba(255,255,255,0.9)'}}>
                       {ZILE_LUNG[d.getDay()]}
                     </div>
-                    {tip!=='L'&&<div style={{fontSize:11,color:c.color,marginTop:2}}>{c.emoji} {c.label}</div>}
+                    {tip!=='L'&&<div style={{fontSize:11,color:c.color,marginTop:2,fontWeight:500}}>{c.emoji} {c.label}</div>}
                   </div>
-                  <div style={{background:c.pillBg,borderRadius:8,padding:'4px 10px',border:`1px solid ${c.border}`,fontSize:12,fontWeight:800,color:c.pillColor,flexShrink:0}}>
-                    {tip==='L'?'—':tip}
-                  </div>
+                  {tip!=='L'&&(
+                    <div style={{background:c.pillBg,borderRadius:8,padding:'5px 11px',border:`1px solid ${c.border}`,fontSize:13,fontWeight:800,color:c.pillColor,flexShrink:0,letterSpacing:'0.02em'}}>
+                      {tip}
+                    </div>
+                  )}
                   {isToday&&<div style={{width:6,height:6,borderRadius:'50%',background:'#60a5fa',marginLeft:8,flexShrink:0}}/>}
                 </div>
               )
@@ -159,9 +160,9 @@ export default function LunaPage() {
                   const isWE=d.getDay()===0||d.getDay()===6
                   return (
                     <div key={di} style={{padding:3}}>
-                      <div style={{borderRadius:10,padding:'7px 2px',background:isToday?'rgba(96,165,250,0.15)':c.bg,border:isToday?'1.5px solid #60a5fa':`1px solid ${c.border}`,display:'flex',flexDirection:'column',alignItems:'center',gap:2,boxShadow:isToday?'0 0 0 2px rgba(96,165,250,0.2)':'none'}}>
+                      <div style={{borderRadius:10,padding:'7px 2px',background:isToday?'rgba(96,165,250,0.2)':c.bg,border:isToday?'2px solid #60a5fa':`1px solid ${c.border}`,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
                         <span style={{fontSize:14,fontWeight:800,lineHeight:1,color:isToday?'#60a5fa':isWE?'#6b6b80':'white'}}>{d.getDate()}</span>
-                        <span style={{fontSize:9,fontWeight:800,color:tip==='L'?'#4b4b60':c.pillColor}}>{tip==='L'?'':tip}</span>
+                        <span style={{fontSize:9,fontWeight:800,color:tip==='L'?'transparent':c.pillColor}}>{tip==='L'?'·':tip}</span>
                       </div>
                     </div>
                   )
