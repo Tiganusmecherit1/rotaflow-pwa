@@ -73,7 +73,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     ))
     const notif = notificari.find(n => n.id === notifId)
     if (notif) {
-      const citite = [...new Set([...(notif.citita_de || []), angajat.id])]
+      const citite = Array.from(new Set([...(notif.citita_de || []), angajat.id]))
       await supabase.from('notificari').update({ citita_de: citite }).eq('id', notifId)
     }
   }, [angajat, notificari])
