@@ -28,13 +28,13 @@ export default function NotificariPage() {
   const necitite = vizibile.filter((n: any) => !(n.citita_de||[]).includes(angajat.id)).length
 
   const stergeNotif = async (id: string) => {
-    setSterse(prev => new Set([...prev, id]))
+    setSterse(prev => new Set(Array.from(prev).concat(id)))
     await supabase.from('notificari').delete().eq('id', id)
   }
 
   const stergeToate = async () => {
     const ids = vizibile.map((n: any) => n.id)
-    setSterse(prev => new Set([...prev, ...ids]))
+    setSterse(prev => new Set(Array.from(prev).concat(ids)))
     if (ids.length > 0) await supabase.from('notificari').delete().in('id', ids)
   }
 
