@@ -19,95 +19,78 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#1c1c1e', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      {/* Top accent line */}
-      <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, transparent, #60cdff, #0078d4, transparent)' }}/>
+    <div style={{
+      minHeight: '100vh', background: '#1a1a1f',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '0 24px',
+      paddingTop: 'env(safe-area-inset-top, 0px)',
+    }}>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      {/* Logo */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginBottom: 48 }}>
+        <div style={{
+          width: 72, height: 72, borderRadius: 18,
+          background: 'linear-gradient(145deg, #2a6dd9, #1a4fa0)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 32px rgba(42,109,217,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+        }}>
+          <span style={{ color: 'white', fontSize: 32, fontWeight: 900, letterSpacing: -1 }}>R</span>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: 'white', letterSpacing: -0.5 }}>RotaFlow</div>
+          <div style={{ fontSize: 13, color: '#8b8b9e', marginTop: 2 }}>Tura ta, oriunde ești</div>
+        </div>
+      </div>
 
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-4 mb-14">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-3xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, rgba(96,205,255,0.15), rgba(0,120,212,0.25))', border: '1px solid rgba(96,205,255,0.25)', boxShadow: '0 0 40px rgba(96,205,255,0.12)' }}>
-              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#60cdff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="3"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-                <line x1="8" y1="14" x2="13" y2="14"/>
-                <line x1="8" y1="18" x2="11" y2="18"/>
-              </svg>
-            </div>
-            {/* Subtle glow */}
-            <div className="absolute inset-0 rounded-3xl blur-xl opacity-30"
-              style={{ background: 'radial-gradient(circle, #60cdff, transparent)' }}/>
+      {/* Card form */}
+      <form onSubmit={submit} style={{ width: '100%', maxWidth: 340 }}>
+        <div style={{
+          background: '#26262e', borderRadius: 16,
+          border: '1px solid rgba(255,255,255,0.08)',
+          overflow: 'hidden', marginBottom: 12,
+        }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#8b8b9e', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Email</div>
+            <input
+              type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="adresa@email.com" required autoComplete="email"
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 15, color: 'white', fontFamily: 'inherit',
+              }}
+            />
           </div>
-          <div className="text-center">
-            <h1 className="text-[32px] font-black tracking-tight text-white">RotaFlow</h1>
-            <p className="text-[13px] mt-0.5" style={{ color: '#636366' }}>Tura ta, oriunde ești</p>
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#8b8b9e', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Parolă</div>
+            <input
+              type="password" value={parola} onChange={e => setParola(e.target.value)}
+              placeholder="••••••••" required autoComplete="current-password"
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 15, color: 'white', fontFamily: 'inherit',
+              }}
+            />
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={submit} className="w-full max-w-[340px] space-y-3">
+        {err && (
+          <div style={{
+            background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: 12, padding: '10px 16px',
+            color: '#f87171', fontSize: 13, textAlign: 'center', marginBottom: 12,
+          }}>{err}</div>
+        )}
 
-          <div className="rounded-2xl overflow-hidden" style={{ background: '#2c2c2e', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {/* Email */}
-            <div className="px-4 py-3.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <label className="block text-[10px] font-semibold mb-1.5" style={{ color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="adresa@email.com"
-                required
-                autoComplete="email"
-                className="w-full bg-transparent text-[16px] text-white placeholder-zinc-600 outline-none"
-              />
-            </div>
-            {/* Parola */}
-            <div className="px-4 py-3.5">
-              <label className="block text-[10px] font-semibold mb-1.5" style={{ color: '#8e8e93', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Parolă
-              </label>
-              <input
-                type="password"
-                value={parola}
-                onChange={e => setParola(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="w-full bg-transparent text-[16px] text-white placeholder-zinc-600 outline-none"
-              />
-            </div>
-          </div>
-
-          {err && (
-            <div className="rounded-xl px-4 py-3 text-center text-[13px] font-medium"
-              style={{ background: 'rgba(255,59,48,0.12)', border: '1px solid rgba(255,59,48,0.25)', color: '#ff6b6b' }}>
-              {err}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-1 text-[17px] font-bold py-4 rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50"
-            style={{ background: loading ? 'rgba(0,120,212,0.6)' : '#0078d4', color: 'white', boxShadow: '0 4px 24px rgba(0,120,212,0.35)' }}>
-            {loading
-              ? <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 rounded-full" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.8s linear infinite' }}/>
-                  Conectare...
-                </span>
-              : 'Conectare'}
-          </button>
-
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-        </form>
-      </div>
+        <button type="submit" disabled={loading} style={{
+          width: '100%', padding: '15px 0', borderRadius: 14, border: 'none', cursor: 'pointer',
+          fontSize: 16, fontWeight: 700, color: 'white', fontFamily: 'inherit',
+          background: loading ? 'rgba(42,109,217,0.5)' : 'linear-gradient(145deg, #2a6dd9, #1a4fa0)',
+          boxShadow: loading ? 'none' : '0 4px 20px rgba(42,109,217,0.4)',
+          transition: 'all 0.15s', opacity: loading ? 0.7 : 1,
+        }}>
+          {loading ? 'Conectare...' : 'Conectare'}
+        </button>
+      </form>
     </div>
   )
 }
