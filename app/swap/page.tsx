@@ -23,6 +23,7 @@ export default function SwapPage() {
   const [ziaCo, setZiaCo]     = useState<string|null>(null)
   const [sent, setSent]        = useState(false)
   const [lunaOffset, setLunaOffset] = useState(0)
+  const [nota, setNota]        = useState('')
 
   if (loading || !angajat) return (
     <div style={{minHeight:'100vh',background:'#1a1a1f',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -52,7 +53,7 @@ export default function SwapPage() {
     return (tM==='D'||tM==='S') && (tC==='D'||tC==='S')
   }
 
-  const reset = () => { setZiaMea(null); setZiaCo(null); setSent(false) }
+  const reset = () => { setZiaMea(null); setZiaCo(null); setSent(false); setNota('') }
 
   if (sent) return (
     <div style={{minHeight:'100vh',background:'#1a1a1f',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,padding:24}}>
@@ -181,14 +182,14 @@ export default function SwapPage() {
           </div>
         </div>
 
-        {/* Sumar + buton */}
+        {/* Sumar + nota + buton */}
         {ziaMea && ziaCo && colegObiect && (
           <div style={{
             background:'rgba(42,109,217,0.12)',border:'1px solid rgba(96,165,250,0.25)',
             borderRadius:16,padding:'14px 16px',marginBottom:14,
           }}>
             <div style={{fontSize:12,color:'#8b8b9e',marginBottom:8,fontWeight:600}}>Rezumat swap</div>
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
               <div style={{textAlign:'center'}}>
                 <div style={{fontSize:11,color:'#8b8b9e'}}>Tu</div>
                 <div style={{fontSize:16,fontWeight:800,color:'white'}}>{new Date(ziaMea).getDate()} {LUNI[new Date(ziaMea).getMonth()]}</div>
@@ -200,6 +201,25 @@ export default function SwapPage() {
                 <div style={{fontSize:16,fontWeight:800,color:'white'}}>{new Date(ziaCo).getDate()} {LUNI[new Date(ziaCo).getMonth()]}</div>
                 <div style={{fontSize:12,fontWeight:700,color:'#c4b5fd'}}>{turaColegPeZi(new Date(ziaCo))}</div>
               </div>
+            </div>
+            {/* Nota */}
+            <div style={{borderTop:'1px solid rgba(255,255,255,0.1)',paddingTop:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#8b8b9e',marginBottom:6,letterSpacing:'0.05em',textTransform:'uppercase'}}>
+                💬 Notă pentru coleg (opțional)
+              </div>
+              <input
+                type="text"
+                value={nota}
+                onChange={e=>setNota(e.target.value)}
+                placeholder="ex: Am doctor, te rog să schimbi cu mine..."
+                maxLength={120}
+                style={{
+                  width:'100%',background:'rgba(255,255,255,0.06)',border:'1px solid rgba(255,255,255,0.1)',
+                  borderRadius:10,padding:'10px 12px',fontSize:13,color:'white',fontFamily:'inherit',
+                  outline:'none',boxSizing:'border-box',
+                }}
+              />
+              {nota && <div style={{fontSize:10,color:'#6b6b80',marginTop:4,textAlign:'right'}}>{nota.length}/120</div>}
             </div>
           </div>
         )}
