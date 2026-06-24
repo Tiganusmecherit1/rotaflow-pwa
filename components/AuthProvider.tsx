@@ -63,7 +63,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       .order('created_at', { ascending: false })
       .limit(50)
 
-    // Filtrare dupa UUID daca il avem
     if (angajatUuid) query = query.eq('destinatar_id', angajatUuid)
 
     const { data, error } = await query
@@ -73,7 +72,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         id: n.id,
         titlu: n.titlu || 'Notificare',
         mesaj: n.descriere || '',
-        tip: n.tip || 'program',
+        tip: n.tip || 'swap_primit',
         creat_la: n.created_at,
         citita_de: n.citita ? [angajatId ?? 0] : [],
       })))
@@ -156,11 +155,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       if (event === 'SIGNED_IN') load()
     })
 
-    // Realtime — ture_mirror
+    // Realtime — ture_mirror (debounced - nu reincarcam la fiecare rand)
+    let mirrorTimer: ReturnType<typeof setTimeout> | null = null
     const mirrorSub = supabase
       .channel('ture-mirror-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ture_mirror' },
-        () => loadTureMirror()
+        () => {
+          if (mirrorTimer) clearTimeout(mirrorTimer)
+          mirrorTimer = setTimeout(() => loadTureMirror(), 2000)
+        }
       ).subscribe()
 
     // Realtime — notificari
