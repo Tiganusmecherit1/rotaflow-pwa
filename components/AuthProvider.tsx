@@ -58,24 +58,29 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const loadNotificari = useCallback(async () => {
     const { data, error } = await supabase
       .from('notificari')
-      .select('*')
-      .order('creat_la', { ascending: false })
+      .select('id, titlu, descriere, tip, citita, created_at')
+      .order('created_at', { ascending: false })
       .limit(50)
     console.log('notificari:', data?.length, error)
-    if (data) setNotificari(data)
-  }, [])
+    if (data) {
+      // Adaptam la structura noastra
+      setNotificari(data.map((n: any) => ({
+        id: n.id,
+        titlu: n.titlu || 'Notificare',
+        mesaj: n.descriere || '',
+        tip: n.tip || 'program',
+        creat_la: n.created_at,
+        citita_de: n.citita ? [angajat?.id ?? 0] : [],
+      })))
+    }
+  }, [angajat])
 
   const marcheazaCitita = useCallback(async (notifId: string) => {
-    if (!angajat) return
     setNotificari(prev => prev.map(n =>
-      n.id === notifId ? { ...n, citita_de: [...(n.citita_de || []), angajat.id] } : n
+      n.id === notifId ? { ...n, citita_de: [angajat?.id ?? 0] } : n
     ))
-    const notif = notificari.find(n => n.id === notifId)
-    if (notif) {
-      const citite = Array.from(new Set([...(notif.citita_de || []), angajat.id]))
-      await supabase.from('notificari').update({ citita_de: citite }).eq('id', notifId)
-    }
-  }, [angajat, notificari])
+    await supabase.from('notificari').update({ citita: true }).eq('id', notifId)
+  }, [angajat])
 
   useEffect(() => {
     async function load() {
@@ -157,7 +162,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const notifSub = supabase
       .channel('notificari-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificari' },
-        (payload) => setNotificari(prev => [payload.new as Notificare, ...prev])
+        (payload) => {
+          const n = payload.new as any
+          setNotificari(prev => [{
+            id: n.id,
+            titlu: n.titlu || 'Notificare',
+            mesaj: n.descriere || '',
+            tip: n.tip || 'program',
+            creat_la: n.created_at,
+            citita_de: [],
+          }, ...prev])
+        }
       ).subscribe()
 
     return () => {
