@@ -56,18 +56,8 @@ export default function SwapPage() {
               {inp('Ziua colegului', <input type="date" value={dataB} onChange={e=>setDataB(e.target.value)} style={inputStyle}/>)}
               <div style={{padding:'14px 16px'}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#8b8b9e',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>Notă</div>
-                style={inputStyle}
+                <input type="text" value={nota} onChange={e=>setNota(e.target.value)} placeholder="Opțional..." style={inputStyle}/>
               </div>
-            </div>
-
-            <button
-              disabled={!dataA||!destId||!dataB}
-              onClick={()=>setSent(true)}
-              style={{
-                width:'100%',padding:'15px 0',borderRadius:14,border:'none',cursor:'pointer',
-                fontSize:16,fontWeight:700,color:'white',fontFamily:'inherit',
-                background:(!dataA||!destId||!dataB)?'rgba(42,109,217,0.3)':'linear-gradient(145deg,#2a6dd9,#1a4fa0)',
-                boxShadow:(!dataA||!destId||!dataB)?'none':'0 4px 20px rgba(42,109,217,0.4)',
               }}>
               Trimite cerere
             </button>
