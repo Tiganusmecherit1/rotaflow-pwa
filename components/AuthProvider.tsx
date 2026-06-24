@@ -56,12 +56,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (data) setTureMirror(data)
   }, [])
 
-  const loadNotificari = useCallback(async (angajatId?: number) => {
-    const { data, error } = await supabase
+  const loadNotificari = useCallback(async (angajatId?: number, angajatUuid?: string) => {
+    let query = supabase
       .from('notificari')
-      .select('id, titlu, descriere, tip, citita, created_at')
+      .select('id, titlu, descriere, tip, citita, created_at, destinatar_id')
       .order('created_at', { ascending: false })
       .limit(50)
+
+    // Filtrare dupa UUID daca il avem
+    if (angajatUuid) query = query.eq('destinatar_id', angajatUuid)
+
+    const { data, error } = await query
     console.log('notificari:', data?.length, error)
     if (data) {
       setNotificari(data.map((n: any) => ({
@@ -73,7 +78,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         citita_de: n.citita ? [angajatId ?? 0] : [],
       })))
     }
-  }, []) // fara dependinte — angajatId vine ca parametru
+  }, [])
 
   const marcheazaCitita = useCallback(async (notifId: string) => {
     setNotificari(prev => prev.map(n =>
@@ -135,7 +140,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!selfAdaptat) setEroare(`Contul tău (${session.user.email}) nu are un profil de angajat asociat.`)
         setAngajat(selfAdaptat)
 
-        await Promise.all([loadTureMirror(), loadNotificari(selfAdaptat?.id)])
+        await Promise.all([loadTureMirror(), loadNotificari(selfAdaptat?.id, session.user.id)])
         setLoading(false)
 
       } catch (e: any) {
@@ -164,14 +169,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificari' },
         (payload) => {
           const n = payload.new as any
-          setNotificari(prev => [{
-            id: n.id,
-            titlu: n.titlu || 'Notificare',
-            mesaj: n.descriere || '',
-            tip: n.tip || 'program',
-            creat_la: n.created_at,
-            citita_de: [],
-          }, ...prev])
+          // Adaugam doar daca e pentru userul curent
+          setAngajat(crtAngajat => {
+            if (!crtAngajat) return crtAngajat
+            if (n.destinatar_id && n.destinatar_id !== crtAngajat.uuid) return crtAngajat
+            setNotificari(prev => [{
+              id: n.id,
+              titlu: n.titlu || 'Notificare',
+              mesaj: n.descriere || '',
+              tip: n.tip || 'program',
+              creat_la: n.created_at,
+              citita_de: [],
+            }, ...prev])
+            return crtAngajat
+          })
         }
       ).subscribe()
 
