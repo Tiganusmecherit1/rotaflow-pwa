@@ -56,7 +56,7 @@ export default function SwapPage() {
               {inp('Ziua colegului', <input type="date" value={dataB} onChange={e=>setDataB(e.target.value)} style={inputStyle}/>)}
               <div style={{padding:'14px 16px'}}>
                 <div style={{fontSize:10,fontWeight:700,color:'#8b8b9e',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>Notă</div>
-                <input type="text" value={nota} onChange={e=>setNota(e.target.value)} placeholder="Opțional..." style={{...inputStyle,'::placeholder':{color:'#4b4b60'} as any}}/>
+                <input type="text" value={nota} onChange={e=>setNota(e.target.value)} placeholder="Opțional..." style={{...inputStyle}}/>
               </div>
             </div>
 
