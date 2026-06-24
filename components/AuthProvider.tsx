@@ -55,7 +55,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     if (data) setTureMirror(data)
   }, [])
 
-  const loadNotificari = useCallback(async () => {
+  const loadNotificari = useCallback(async (angajatId?: number) => {
     const { data, error } = await supabase
       .from('notificari')
       .select('id, titlu, descriere, tip, citita, created_at')
@@ -63,24 +63,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       .limit(50)
     console.log('notificari:', data?.length, error)
     if (data) {
-      // Adaptam la structura noastra
       setNotificari(data.map((n: any) => ({
         id: n.id,
         titlu: n.titlu || 'Notificare',
         mesaj: n.descriere || '',
         tip: n.tip || 'program',
         creat_la: n.created_at,
-        citita_de: n.citita ? [angajat?.id ?? 0] : [],
+        citita_de: n.citita ? [angajatId ?? 0] : [],
       })))
     }
-  }, [angajat])
+  }, []) // fara dependinte — angajatId vine ca parametru
 
   const marcheazaCitita = useCallback(async (notifId: string) => {
     setNotificari(prev => prev.map(n =>
-      n.id === notifId ? { ...n, citita_de: [angajat?.id ?? 0] } : n
+      n.id === notifId ? { ...n, citita_de: [1] } : n
     ))
     await supabase.from('notificari').update({ citita: true }).eq('id', notifId)
-  }, [angajat])
+  }, []) // fara dependinte
 
   useEffect(() => {
     async function load() {
@@ -135,7 +134,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!selfAdaptat) setEroare(`Contul tău (${session.user.email}) nu are un profil de angajat asociat.`)
         setAngajat(selfAdaptat)
 
-        await Promise.all([loadTureMirror(), loadNotificari()])
+        await Promise.all([loadTureMirror(), loadNotificari(selfAdaptat?.id)])
         setLoading(false)
 
       } catch (e: any) {
