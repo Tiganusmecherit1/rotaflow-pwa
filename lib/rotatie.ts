@@ -38,10 +38,46 @@ export function inAbsenta(d: Date, m: Angajat): boolean {
   return m.absente.some(a => a.data===fmtDateInput(d))
 }
 
-export function getTura(d: Date, angajat: Angajat, toataEchipa: Angajat[], overrides: Override[] = []): string {
+// Calculeaza ore acumulate pentru fiecare angajat de la 1 Iunie pana la ziua respectiva
+// Identic cu desktop-ul
+export function calcOreAcumulate(echipa: Angajat[], panaLa: Date): Record<number, number> {
+  const perioadaStart = new Date(2026, 5, 1) // 1 Iunie 2026
+  const perioadaEnd = new Date(panaLa.getTime() - 86400000)
+  if (perioadaEnd < perioadaStart) return {}
+
+  const ore: Record<number, number> = {}
+  echipa.forEach(m => { ore[m.id] = 0 })
+
+  for (let d = new Date(perioadaStart); d <= perioadaEnd; d = new Date(d.getTime()+86400000)) {
+    const activi = echipa.filter(m => !inCO(d, m) && !inAbsenta(d, m))
+    const n = activi.length
+    if (n === 0) continue
+
+    if (n >= 4) {
+      // Sortam dupa ore acumulate
+      const activiSortati = [...activi].sort((a,b) => (ore[a.id]||0) - (ore[b.id]||0))
+      const dayIdx = Math.floor((d.getTime()-REF.getTime())/86400000)
+      activiSortati.forEach((m, poz) => {
+        const sec = ((dayIdx+poz)%n+n)%n
+        if (sec === 0 || sec === 1 || sec === 2) ore[m.id] = (ore[m.id]||0) + 8
+      })
+    } else {
+      // Ciclu fix
+      const dayIdx = Math.floor((d.getTime()-REF.getTime())/86400000)
+      activi.forEach((m, poz) => {
+        const sec = ((dayIdx+poz)%n+n)%n
+        if (sec === 0 || sec === 1 || sec === 2) ore[m.id] = (ore[m.id]||0) + 8
+      })
+    }
+  }
+
+  return ore
+}
+
+export function getTura(d: Date, angajat: Angajat, toataEchipa: Angajat[], overrides: Override[] = [], oreAcumulate?: Record<number,number>): string {
   const dStr = fmtDateInput(d)
 
-  // Override manual din Supabase (drag_ are prioritate)
+  // Override manual (drag_) are prioritate maxima
   const ovManual = overrides.find(o =>
     o.angajat_id === angajat.id && o.data === dStr &&
     o.tip === 'manual' && parseD(o.expira_la) >= d
@@ -64,6 +100,18 @@ export function getTura(d: Date, angajat: Angajat, toataEchipa: Angajat[], overr
 
   const dayIdx = Math.floor((d.getTime()-REF.getTime())/86400000)
   const n = activi.length
+
+  // Cu 4+ activi si ore acumulate → algoritm echitate (identic cu desktop)
+  if (n >= 4 && oreAcumulate && Object.keys(oreAcumulate).length > 0) {
+    const activiSortati = [...activi].sort((a,b) => (oreAcumulate[a.id]||0) - (oreAcumulate[b.id]||0))
+    const pozEchitate = activiSortati.findIndex(a => a.id===angajat.id)
+    const sec = ((dayIdx+pozEchitate)%n+n)%n
+    if (sec===0||sec===1) return 'D'
+    if (sec===2) return 'S'
+    return 'L'
+  }
+
+  // Fallback: ciclu fix (< 4 activi sau fara date de ore)
   const sec = ((dayIdx+poz)%n+n)%n
   if (sec===0||sec===1) return 'D'
   if (sec===2) return 'S'

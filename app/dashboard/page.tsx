@@ -42,7 +42,7 @@ function Spinner() {
 }
 
 export default function Dashboard() {
-  const { angajat, echipa, overrides, notificari, loading, eroare } = useAuth()
+  const { angajat, echipa, overrides, notificari, oreAcumulate, loading, eroare } = useAuth()
   const router = useRouter()
   const [weekOffset, setWeekOffset] = useState(0)
 
@@ -73,7 +73,7 @@ export default function Dashboard() {
   const azi = new Date(); azi.setHours(0,0,0,0)
   const aziStr = fmtDateInput(azi)
 
-  const turaAzi = getTura(azi, angajat, echipa, overrides)
+  const turaAzi = getTura(azi, angajat, echipa, overrides, oreAcumulate)
   const infoAzi = TURA_INFO[turaAzi]??TURA_INFO.L
   const cardStyle = CARD_STYLE[turaAzi]??CARD_STYLE.L
   const dataLabel = azi.toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long'})

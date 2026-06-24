@@ -25,7 +25,7 @@ const Spinner = () => (
 )
 
 export default function LunaPage() {
-  const { angajat, echipa, overrides, loading } = useAuth()
+  const { angajat, echipa, overrides, oreAcumulate, loading } = useAuth()
   const [lunaOffset, setLunaOffset] = useState(0)
   const [view, setView] = useState<'lista'|'grid'>('lista')
 
@@ -41,7 +41,7 @@ export default function LunaPage() {
   )
 
   const stats: Record<string,number> = {}
-  zile.forEach(d => { const t=getTura(d,angajat,echipa,overrides); stats[t]=(stats[t]||0)+1 })
+  zile.forEach(d => { const t=getTura(d,angajat,echipa,overrides,oreAcumulate); stats[t]=(stats[t]||0)+1 })
 
   const firstDow = (lunaStart.getDay()+6)%7
   const cells: (Date|null)[] = [...Array(firstDow).fill(null),...zile]
@@ -100,7 +100,7 @@ export default function LunaPage() {
         {view==='lista' && (
           <div style={{display:'flex',flexDirection:'column',gap:5}}>
             {zile.map((d,i)=>{
-              const tip=getTura(d,angajat,echipa,overrides)
+              const tip=getTura(d,angajat,echipa,overrides,oreAcumulate)
               const c=TC[tip]??TC.L
               const isToday=fmtDateInput(d)===fmtDateInput(azi)
               const isWE=d.getDay()===0||d.getDay()===6
@@ -154,7 +154,7 @@ export default function LunaPage() {
               <div key={wi} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
                 {cells.slice(wi*7,(wi+1)*7).map((d,di)=>{
                   if(!d) return <div key={di}/>
-                  const tip=getTura(d,angajat,echipa,overrides)
+                  const tip=getTura(d,angajat,echipa,overrides,oreAcumulate)
                   const c=TC[tip]??TC.L
                   const isToday=fmtDateInput(d)===fmtDateInput(azi)
                   const isWE=d.getDay()===0||d.getDay()===6

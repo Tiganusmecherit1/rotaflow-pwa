@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Angajat } from '@/lib/rotatie'
+import { Angajat, calcOreAcumulate } from '@/lib/rotatie'
 
 export interface Override {
   id: string
@@ -27,13 +27,14 @@ interface AuthCtx {
   echipa: Angajat[]
   overrides: Override[]
   notificari: Notificare[]
+  oreAcumulate: Record<number, number>
   loading: boolean
   eroare: string | null
   marcheazaCitita: (notifId: string) => void
 }
 
 const Ctx = createContext<AuthCtx>({
-  angajat: null, echipa: [], overrides: [], notificari: [],
+  angajat: null, echipa: [], overrides: [], notificari: [], oreAcumulate: {},
   loading: true, eroare: null, marcheazaCitita: () => {}
 })
 export const useAuth = () => useContext(Ctx)
@@ -45,6 +46,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [echipa, setEchipa] = useState<Angajat[]>([])
   const [overrides, setOverrides] = useState<Override[]>([])
   const [notificari, setNotificari] = useState<Notificare[]>([])
+  const [oreAcumulate, setOreAcumulate] = useState<Record<number,number>>({})
   const [loading, setLoading] = useState(true)
   const [eroare, setEroare] = useState<string | null>(null)
 
@@ -114,6 +116,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         setEchipa(ec)
 
+        // Calculam ore acumulate (identic cu desktop)
+        const oreAcc = calcOreAcumulate(ec, new Date())
+        setOreAcumulate(oreAcc)
+
         const mySelf = lista.find((a: any) => a.id === session.user.id)
         if (mySelf?.este_sef) { router.replace('/sef'); setLoading(false); return }
 
@@ -175,7 +181,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [pathname, loadOverrides, loadNotificari]) // eslint-disable-line
 
   return (
-    <Ctx.Provider value={{ angajat, echipa, overrides, notificari, loading, eroare, marcheazaCitita }}>
+    <Ctx.Provider value={{ angajat, echipa, overrides, notificari, oreAcumulate, loading, eroare, marcheazaCitita }}>
       {children}
     </Ctx.Provider>
   )
