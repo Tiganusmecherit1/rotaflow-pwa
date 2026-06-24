@@ -2,10 +2,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/components/AuthProvider'
+import { useAuth, TuraMirror } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
 import { supabase } from '@/lib/supabase'
-import { getTura, getMonday, fmtDateInput, TURA_INFO } from '@/lib/rotatie'
+import { getMonday, fmtDateInput, TURA_INFO } from '@/lib/rotatie'
 
 const ZILE = ['Lu','Ma','Mi','Jo','Vi','Sâ','Du']
 const LUNI_GEN = ['ian','feb','mar','apr','mai','iun','iul','aug','sep','oct','nov','dec']
@@ -24,12 +24,17 @@ const CARD_STYLE: Record<string,{bg:string;shadow:string;labelColor:string}> = {
 }
 
 const BADGE: Record<string,{bg:string;color:string}> = {
-  D:  {bg:'rgba(30,79,168,0.6)',  color:'#93c5fd'},
-  S:  {bg:'rgba(76,29,138,0.6)',  color:'#c4b5fd'},
+  D:  {bg:'rgba(37,99,235,0.55)',  color:'#93c5fd'},
+  S:  {bg:'rgba(109,40,217,0.55)', color:'#c4b5fd'},
   L:  {bg:'rgba(255,255,255,0.07)',color:'#6b6b80'},
-  CO: {bg:'rgba(127,29,29,0.6)',  color:'#fca5a5'},
-  CM: {bg:'rgba(124,45,18,0.6)',  color:'#fdba74'},
-  AN: {bg:'rgba(69,10,10,0.6)',   color:'#f87171'},
+  CO: {bg:'rgba(127,29,29,0.6)',   color:'#fca5a5'},
+  CM: {bg:'rgba(124,45,18,0.6)',   color:'#fdba74'},
+  AN: {bg:'rgba(69,10,10,0.6)',    color:'#f87171'},
+}
+
+function getTuraMirror(tureMirror: TuraMirror[], angajatId: number, d: Date): string {
+  const dStr = fmtDateInput(d)
+  return tureMirror.find(t => t.angajat_id === angajatId && t.data === dStr)?.tura ?? 'L'
 }
 
 function Spinner() {
@@ -42,7 +47,7 @@ function Spinner() {
 }
 
 export default function Dashboard() {
-  const { angajat, echipa, overrides, notificari, oreAcumulate, loading, eroare } = useAuth()
+  const { angajat, tureMirror, notificari, loading, eroare } = useAuth()
   const router = useRouter()
   const [weekOffset, setWeekOffset] = useState(0)
 
@@ -73,13 +78,14 @@ export default function Dashboard() {
   const azi = new Date(); azi.setHours(0,0,0,0)
   const aziStr = fmtDateInput(azi)
 
-  const turaAzi = getTura(azi, angajat, echipa, overrides, oreAcumulate)
+  const turaAzi = getTuraMirror(tureMirror, angajat.id, azi)
   const infoAzi = TURA_INFO[turaAzi]??TURA_INFO.L
   const cardStyle = CARD_STYLE[turaAzi]??CARD_STYLE.L
   const dataLabel = azi.toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long'})
 
-  // Notificari necitite
   const necitite = notificari.filter(n => !(n.citita_de||[]).includes(angajat.id)).length
+
+  const hasMirror = tureMirror.length > 0
 
   return (
     <div style={{minHeight:'100vh',background:'#1a1a1f',paddingBottom:80,paddingTop:'env(safe-area-inset-top,0px)'}}>
@@ -98,12 +104,9 @@ export default function Dashboard() {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
-            {necitite > 0 && (
-              <span style={{position:'absolute',top:2,right:2,width:8,height:8,background:'#ef4444',borderRadius:'50%',border:'1.5px solid #1a1a1f'}}/>
-            )}
+            {necitite > 0 && <span style={{position:'absolute',top:2,right:2,width:8,height:8,background:'#ef4444',borderRadius:'50%',border:'1.5px solid #1a1a1f'}}/>}
           </button>
-          <button onClick={async()=>{await supabase.auth.signOut();router.replace('/login')}}
-            style={{background:'none',border:'none',cursor:'pointer',padding:4}}>
+          <button onClick={async()=>{await supabase.auth.signOut();router.replace('/login')}} style={{background:'none',border:'none',cursor:'pointer',padding:4}}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b6b80" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
@@ -114,6 +117,14 @@ export default function Dashboard() {
       </div>
 
       <div style={{padding:'8px 16px 0'}}>
+
+        {/* Banner daca nu e sincronizat */}
+        {!hasMirror && (
+          <div style={{background:'rgba(251,191,36,0.1)',border:'1px solid rgba(251,191,36,0.3)',borderRadius:12,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:16}}>⚠️</span>
+            <span style={{fontSize:12,color:'#fbbf24',fontWeight:500}}>Programul nu a fost sincronizat încă. Apasă "Sincronizează DB" din aplicația desktop.</span>
+          </div>
+        )}
 
         {/* Salut */}
         <div style={{marginBottom:12}}>
@@ -150,10 +161,10 @@ export default function Dashboard() {
           </div>
           <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6}}>
             {days.map((d,i)=>{
-              const tip=getTura(d,angajat,echipa,overrides)
-              const badge=BADGE[tip]??BADGE.L
-              const isToday=fmtDateInput(d)===aziStr
-              const isWE=d.getDay()===0||d.getDay()===6
+              const tip = getTuraMirror(tureMirror, angajat.id, d)
+              const badge = BADGE[tip]??BADGE.L
+              const isToday = fmtDateInput(d)===aziStr
+              const isWE = d.getDay()===0||d.getDay()===6
               return (
                 <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4,opacity:isWE?0.5:1}}>
                   <span style={{fontSize:10,fontWeight:600,color:isToday?'#60a5fa':'#6b6b80'}}>{ZILE[i]}</span>

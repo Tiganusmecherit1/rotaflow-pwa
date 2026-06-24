@@ -2,39 +2,33 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Angajat, calcOreAcumulate } from '@/lib/rotatie'
+import { Angajat } from '@/lib/rotatie'
 
 export interface Override {
-  id: string
-  angajat_id: number
-  data: string
-  tura: string
-  expira_la: string
-  tip: string
+  id: string; angajat_id: number; data: string; tura: string; expira_la: string; tip: string
 }
 
 export interface Notificare {
-  id: string
-  titlu: string
-  mesaj: string
-  tip: string
-  creat_la: string
-  citita_de: number[]
+  id: string; titlu: string; mesaj: string; tip: string; creat_la: string; citita_de: number[]
+}
+
+// Tura mirror — vine direct din desktop
+export interface TuraMirror {
+  angajat_id: number; data: string; tura: string
 }
 
 interface AuthCtx {
   angajat: Angajat | null
   echipa: Angajat[]
-  overrides: Override[]
+  tureMirror: TuraMirror[]
   notificari: Notificare[]
-  oreAcumulate: Record<number, number>
   loading: boolean
   eroare: string | null
   marcheazaCitita: (notifId: string) => void
 }
 
 const Ctx = createContext<AuthCtx>({
-  angajat: null, echipa: [], overrides: [], notificari: [], oreAcumulate: {},
+  angajat: null, echipa: [], tureMirror: [], notificari: [],
   loading: true, eroare: null, marcheazaCitita: () => {}
 })
 export const useAuth = () => useContext(Ctx)
@@ -44,19 +38,20 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const pathname = usePathname()
   const [angajat, setAngajat] = useState<Angajat | null>(null)
   const [echipa, setEchipa] = useState<Angajat[]>([])
-  const [overrides, setOverrides] = useState<Override[]>([])
+  const [tureMirror, setTureMirror] = useState<TuraMirror[]>([])
   const [notificari, setNotificari] = useState<Notificare[]>([])
-  const [oreAcumulate, setOreAcumulate] = useState<Record<number,number>>({})
   const [loading, setLoading] = useState(true)
   const [eroare, setEroare] = useState<string | null>(null)
 
-  const loadOverrides = useCallback(async () => {
-    const azi = new Date().toISOString().split('T')[0]
+  const loadTureMirror = useCallback(async () => {
+    const azi = new Date()
+    azi.setDate(azi.getDate() - 7)
+    const aziStr = azi.toISOString().split('T')[0]
     const { data } = await supabase
-      .from('overrides')
-      .select('*')
-      .gte('expira_la', azi)
-    if (data) setOverrides(data)
+      .from('ture_mirror')
+      .select('angajat_id, data, tura')
+      .gte('data', aziStr)
+    if (data) setTureMirror(data)
   }, [])
 
   const loadNotificari = useCallback(async () => {
@@ -86,8 +81,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         const { data: { session }, error: sessErr } = await supabase.auth.getSession()
         if (sessErr || !session) {
           if (pathname !== '/login') router.replace('/login')
-          setLoading(false)
-          return
+          setLoading(false); return
         }
 
         const [{ data: sbAngajati, error: errA }, { data: sbConcedii }, { data: sbAbsente }] =
@@ -116,10 +110,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         setEchipa(ec)
 
-        // Calculam ore acumulate (identic cu desktop)
-        const oreAcc = calcOreAcumulate(ec, new Date())
-        setOreAcumulate(oreAcc)
-
         const mySelf = lista.find((a: any) => a.id === session.user.id)
         if (mySelf?.este_sef) { router.replace('/sef'); setLoading(false); return }
 
@@ -138,8 +128,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         if (!selfAdaptat) setEroare(`Contul tău (${session.user.email}) nu are un profil de angajat asociat.`)
         setAngajat(selfAdaptat)
 
-        // Incarcam overrides si notificari
-        await Promise.all([loadOverrides(), loadNotificari()])
+        await Promise.all([loadTureMirror(), loadNotificari()])
         setLoading(false)
 
       } catch (e: any) {
@@ -155,33 +144,29 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       if (event === 'SIGNED_IN') load()
     })
 
-    // Realtime — overrides
-    const overrideSub = supabase
-      .channel('overrides-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'overrides' },
-        () => loadOverrides()
-      )
-      .subscribe()
+    // Realtime — ture_mirror
+    const mirrorSub = supabase
+      .channel('ture-mirror-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ture_mirror' },
+        () => loadTureMirror()
+      ).subscribe()
 
     // Realtime — notificari
     const notifSub = supabase
       .channel('notificari-changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificari' },
-        (payload) => {
-          setNotificari(prev => [payload.new as Notificare, ...prev])
-        }
-      )
-      .subscribe()
+        (payload) => setNotificari(prev => [payload.new as Notificare, ...prev])
+      ).subscribe()
 
     return () => {
       authSub.subscription.unsubscribe()
-      supabase.removeChannel(overrideSub)
+      supabase.removeChannel(mirrorSub)
       supabase.removeChannel(notifSub)
     }
-  }, [pathname, loadOverrides, loadNotificari]) // eslint-disable-line
+  }, [pathname, loadTureMirror, loadNotificari]) // eslint-disable-line
 
   return (
-    <Ctx.Provider value={{ angajat, echipa, overrides, notificari, oreAcumulate, loading, eroare, marcheazaCitita }}>
+    <Ctx.Provider value={{ angajat, echipa, tureMirror, notificari, loading, eroare, marcheazaCitita }}>
       {children}
     </Ctx.Provider>
   )

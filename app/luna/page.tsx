@@ -1,12 +1,18 @@
 'use client'
 import { useState } from 'react'
-import { useAuth } from '@/components/AuthProvider'
+import { useAuth, TuraMirror } from '@/components/AuthProvider'
 import BottomNav from '@/components/BottomNav'
-import { getTura, fmtDateInput } from '@/lib/rotatie'
+import { fmtDateInput } from '@/lib/rotatie'
 
 const LUNI = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie']
 const ZILE_LUNG = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă']
 const ZILE_SCURT = ['Du','Lu','Ma','Mi','Jo','Vi','Sâ']
+
+
+function getTuraMirror(tureMirror: TuraMirror[], angajatId: number, d: Date): string {
+  const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  return tureMirror.find(t => t.angajat_id === angajatId && t.data === dStr)?.tura ?? 'L'
+}
 
 const TC: Record<string,{label:string;emoji:string;bg:string;color:string;border:string;pillBg:string;pillColor:string}> = {
   D:  {label:'Dimineață',emoji:'☀️',bg:'rgba(37,99,235,0.35)',  color:'#93c5fd',border:'rgba(59,130,246,0.6)', pillBg:'rgba(37,99,235,0.7)', pillColor:'#ffffff'},
@@ -25,7 +31,7 @@ const Spinner = () => (
 )
 
 export default function LunaPage() {
-  const { angajat, echipa, overrides, oreAcumulate, loading } = useAuth()
+  const { angajat, tureMirror, loading } = useAuth()
   const [lunaOffset, setLunaOffset] = useState(0)
   const [view, setView] = useState<'lista'|'grid'>('lista')
 
@@ -41,7 +47,7 @@ export default function LunaPage() {
   )
 
   const stats: Record<string,number> = {}
-  zile.forEach(d => { const t=getTura(d,angajat,echipa,overrides,oreAcumulate); stats[t]=(stats[t]||0)+1 })
+  zile.forEach(d => { const t=getTuraMirror(tureMirror, angajat.id, d); stats[t]=(stats[t]||0)+1 })
 
   const firstDow = (lunaStart.getDay()+6)%7
   const cells: (Date|null)[] = [...Array(firstDow).fill(null),...zile]
@@ -100,7 +106,7 @@ export default function LunaPage() {
         {view==='lista' && (
           <div style={{display:'flex',flexDirection:'column',gap:5}}>
             {zile.map((d,i)=>{
-              const tip=getTura(d,angajat,echipa,overrides,oreAcumulate)
+              const tip=getTuraMirror(tureMirror, angajat.id, d)
               const c=TC[tip]??TC.L
               const isToday=fmtDateInput(d)===fmtDateInput(azi)
               const isWE=d.getDay()===0||d.getDay()===6
@@ -154,7 +160,7 @@ export default function LunaPage() {
               <div key={wi} style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
                 {cells.slice(wi*7,(wi+1)*7).map((d,di)=>{
                   if(!d) return <div key={di}/>
-                  const tip=getTura(d,angajat,echipa,overrides,oreAcumulate)
+                  const tip=getTuraMirror(tureMirror, angajat.id, d)
                   const c=TC[tip]??TC.L
                   const isToday=fmtDateInput(d)===fmtDateInput(azi)
                   const isWE=d.getDay()===0||d.getDay()===6
