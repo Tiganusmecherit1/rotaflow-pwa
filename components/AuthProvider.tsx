@@ -1,86 +1,78 @@
-'use client';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, Angajat } from '@/lib/supabase';
-import type { Session } from '@supabase/supabase-js';
+'use client'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { Angajat } from '@/lib/rotatie'
 
-interface AuthContextType {
-  session: Session | null;
-  angajat: Angajat | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<string | null>;
-  signOut: () => Promise<void>;
+interface AuthCtx {
+  angajat: Angajat | null
+  echipa: Angajat[]
+  loading: boolean
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  angajat: null,
-  loading: true,
-  signIn: async () => null,
-  signOut: async () => {},
-});
+const Ctx = createContext<AuthCtx>({ angajat: null, echipa: [], loading: true })
+export const useAuth = () => useContext(Ctx)
 
-export const useAuth = () => useContext(AuthContext);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [angajat, setAngajat] = useState<Angajat | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const loadAngajat = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('angajati')
-      .select('*')
-      .eq('auth_user_id', userId)
-      .maybeSingle();
-    if (error) {
-      console.error('Eroare la incarcarea angajatului:', error);
-    }
-    setAngajat((data as Angajat) ?? null);
-  };
+export default function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [angajat, setAngajat] = useState<Angajat | null>(null)
+  const [echipa, setEchipa] = useState<Angajat[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let mounted = true;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      setSession(session);
-      if (session?.user?.id) {
-        loadAngajat(session.user.id).finally(() => { if (mounted) setLoading(false); });
-      } else {
-        setLoading(false);
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        if (pathname !== '/login') router.replace('/login')
+        setLoading(false)
+        return
       }
-    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
-      if (!mounted) return;
-      setSession(session);
-      if (session?.user?.id) {
-        loadAngajat(session.user.id).finally(() => { if (mounted) setLoading(false); });
-      } else {
-        setAngajat(null);
-        setLoading(false);
+      const [{ data: sbAngajati }, { data: sbConcedii }, { data: sbAbsente }] = await Promise.all([
+        supabase.from('angajati').select('*').order('pozitie_rotatie'),
+        supabase.from('concedii').select('*'),
+        supabase.from('absente').select('*'),
+      ])
+
+      const ec: Angajat[] = (sbAngajati || [])
+        .filter((a: any) => !a.este_sef)
+        .map((a: any) => ({
+          id: a.pozitie_rotatie,
+          uuid: a.id,
+          nume: a.nume,
+          zile_co: a.zile_co,
+          este_sef: a.este_sef,
+          pozitie_rotatie: a.pozitie_rotatie,
+          concedii: (sbConcedii || [])
+            .filter((c: any) => c.angajat_id === a.id)
+            .map((c: any) => ({ s: c.data_start, e: c.data_sfarsit })),
+          absente: (sbAbsente || [])
+            .filter((ab: any) => ab.angajat_id === a.id)
+            .map((ab: any) => ({ data: ab.data_start, tip: ab.tip, zile: ab.zile })),
+        }))
+
+      setEchipa(ec)
+
+      const mySelf = (sbAngajati || []).find((a: any) => a.id === session.user.id)
+      if (mySelf?.este_sef) {
+        router.replace('/sef')
+        setLoading(false)
+        return
       }
-    });
 
-    return () => { mounted = false; subscription.unsubscribe(); };
-  }, []);
+      const selfAdaptat = ec.find(a => a.uuid === session.user.id) ?? null
+      setAngajat(selfAdaptat)
+      setLoading(false)
+    }
 
-  const signIn = async (email: string, password: string): Promise<string | null> => {
-    console.log('Incerc login cu:', email);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log('Rezultat login:', { data, error });
-    if (error) return error.message;
-    return null;
-  };
+    load()
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') router.replace('/login')
+    })
+    return () => sub.subscription.unsubscribe()
+  }, [router, pathname])
 
-  return (
-    <AuthContext.Provider value={{ session, angajat, loading, signIn, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <Ctx.Provider value={{ angajat, echipa, loading }}>{children}</Ctx.Provider>
 }
