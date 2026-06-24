@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ro">
-      <body className="bg-[#1c1c1e] text-white antialiased overscroll-none min-h-screen">
+      <body style={{ background: '#1c1c1e', color: 'white', WebkitTapHighlightColor: 'transparent', overscrollBehavior: 'none' }}>
         <AuthProvider>
           {children}
         </AuthProvider>

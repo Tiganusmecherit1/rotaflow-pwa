@@ -10,9 +10,11 @@ export default function Root() {
       router.replace(session ? '/dashboard' : '/login')
     })
   }, [router])
+
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#60cdff]/20 border-t-[#60cdff] rounded-full animate-spin" />
+    <div style={{ minHeight: '100vh', background: '#1c1c1e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid rgba(96,205,255,0.2)', borderTopColor: '#60cdff', animation: 'spin 0.8s linear infinite' }}/>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }
