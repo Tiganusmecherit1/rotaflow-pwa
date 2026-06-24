@@ -47,19 +47,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const azi = new Date()
     azi.setDate(azi.getDate() - 7)
     const aziStr = azi.toISOString().split('T')[0]
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ture_mirror')
       .select('angajat_id, data, tura')
       .gte('data', aziStr)
+    console.log('ture_mirror:', data?.length, error)
     if (data) setTureMirror(data)
   }, [])
 
   const loadNotificari = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('notificari')
       .select('*')
       .order('creat_la', { ascending: false })
       .limit(50)
+    console.log('notificari:', data?.length, error)
     if (data) setNotificari(data)
   }, [])
 
